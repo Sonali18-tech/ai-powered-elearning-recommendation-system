@@ -1,4 +1,7 @@
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/login";
+import Register from "./pages/register";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   BookOpen,
@@ -519,20 +522,53 @@ function Footer() {
   );
 }
 
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-white font-sans">
-      <Navbar />
-      <main>
-        <Hero />
-        <Stats />
-        <Categories />
-        <Courses />
-        <Features />
-        <HowItWorks />
-        <CTA />
-      </main>
-      <Footer />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div className="min-h-screen bg-white font-sans">
+              <Navbar />
+              <main>
+                <Hero />
+                <Stats />
+                <Categories />
+                <Courses />
+                <Features />
+                <HowItWorks />
+                <CTA />
+              </main>
+              <Footer />
+            </div>
+          }
+        />
+
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="*"
+          element={
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold text-slate-900">
+                  404 - Page Not Found
+                </h1>
+                <Link
+                  to="/"
+                  className="mt-4 inline-block text-indigo-600"
+                >
+                  Return Home
+                </Link>
+              </div>
+            </div>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
