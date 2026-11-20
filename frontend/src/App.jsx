@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { useState } from "react";
+import Dashboard from "./pages/Dashboard";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import { Link } from "react-router-dom";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
 import {
   ArrowRight,
   BookOpen,
@@ -26,7 +28,6 @@ import {
   Laptop,
   Rocket,
 } from "lucide-react";
-import { useState } from "react";
 
 const courses = [
   {
@@ -523,7 +524,29 @@ function Footer() {
     </footer>
   );
 }
+function DashboardPlaceholder() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-10 text-center shadow-lg">
+        <BrainCircuit className="mx-auto text-indigo-600" size={50} />
 
+        <h1 className="mt-5 text-3xl font-extrabold text-slate-900">
+          Welcome to LearnAI!
+        </h1>
+
+        <p className="mt-3 text-slate-500">
+          Authentication successful. Your personalized learner dashboard
+          will be available here.
+        </p>
+
+        <CheckCircle2 className="mx-auto mt-6 text-emerald-500" size={35} />
+        <p className="mt-2 font-semibold text-emerald-600">
+          Protected route accessed successfully
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -561,6 +584,10 @@ export default function App() {
   path="/reset-password"
   element={<ResetPassword />}
 />
+
+<Route element={<ProtectedRoute />}>
+  <Route path="/dashboard" element={<Dashboard />} />
+</Route>
 
         <Route
           path="*"

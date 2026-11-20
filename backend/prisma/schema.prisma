@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  LEARNER
+  ADMIN
+  INSTRUCTOR
+}
+
+enum InteractionType {
+  VIEW
+  ENROLL
+  COMPLETE
+  QUIZ
+  LIKE
+  DISMISS
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String?
+  googleId     String?  @unique
+  role         UserRole @default(LEARNER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile               LearnerProfile?
+  enrollments           Enrollment[]
+  interactions          Interaction[]
+  recommendations       Recommendation[]
+  difficultyPredictions DifficultyPrediction[]
+  passwordResets        PasswordReset[]
+}
+
+model LearnerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  education String?
+  skills    String[] @default([])
+  interests String[] @default([])
+  goals     String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Course {
+  id            String          @id @default(uuid())
+  title         String
+  description   String
+  category      String
+  tags          String[]        @default([])
+  prerequisites String[]        @default([])
+  difficulty    DifficultyLevel @default(BEGINNER)
+  duration      Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  enrollments           Enrollment[]
+  interactions          Interaction[]
+  recommendations       Recommendation[]
+  difficultyPredictions DifficultyPrediction[]
+}
+
+model Enrollment {
+  id         String           @id @default(uuid())
+  userId     String
+  courseId   String
+  progress   Float            @default(0)
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Interaction {
+  id        String          @id @default(uuid())
+  userId    String
+  courseId  String
+  eventType InteractionType
+  duration  Int?
+  score     Float?
+  createdAt DateTime        @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id          String   @id @default(uuid())
+  userId      String
+  courseId    String
+  rankScore   Float
+  feedback    String?
+  generatedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model DifficultyPrediction {
+  id             String          @id @default(uuid())
+  userId         String
+  courseId       String
+  predictedLevel DifficultyLevel
+  predictedScore Float?
+  modelVersion   String?
+  generatedAt    DateTime        @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ModelRun {
+  id        String   @id @default(uuid())
+  modelType String
+  version   String?
+  metrics   Json?
+  status    String
+  trainedAt DateTime @default(now())
+}
