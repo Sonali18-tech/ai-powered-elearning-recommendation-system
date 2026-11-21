@@ -1,13 +1,15 @@
+import "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import prisma from "./config/db.js";
-dotenv.config();
+import roleRoutes from "./routes/role.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import passwordRoutes from "./routes/password.routes.js";
 
 const app = express();
 
@@ -75,7 +77,10 @@ app.get("/api/health/db", async (req, res) => {
     });
   }
 });
+app.use("/api/admin", adminRoutes);
+app.use("/api/roles", roleRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/password", passwordRoutes);
 app.listen(PORT, () => {
   console.log(`LearnAI server running on port ${PORT}`);
 });

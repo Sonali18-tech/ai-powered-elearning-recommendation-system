@@ -4,6 +4,13 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../config/db.js";
 import authMiddleware from "../middleware/auth.middleware.js";
+import { OAuth2Client } from "google-auth-library";
+import crypto from "crypto";
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_CALLBACK_URL
+);
 const router = express.Router();
 
 const createToken = (user) => {
@@ -196,6 +203,102 @@ router.post("/logout", (req, res) => {
     success: true,
     message: "Logged out successfully",
   });
+});
+
+
+// START GOOGLE LOGIN
+router.get("/google", (req, res) => {
+  const state = crypto.randomBytes(32).toString("hex");
+
+  res.cookie("google_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 10 * 60 * 1000,
+  });
+
+  const authorizationUrl = googleClient.generateAuthUrl({
+    access_type: "online",
+    scope: ["openid", "email", "profile"],
+    state,
+  });
+
+  return res.redirect(authorizationUrl);
+});
+
+// GOOGLE CALLBACK
+router.get("/google/callback", async (req, res) => {
+  try {
+    const { code, state } = req.query;
+
+    if (
+      !code ||
+      !state ||
+      !req.cookies.google_oauth_state ||
+      state !== req.cookies.google_oauth_state
+    ) {
+      return res.status(400).send("Invalid OAuth request");
+    }
+
+    res.clearCookie("google_oauth_state", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    const { tokens } = await googleClient.getToken(code);
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload?.email || !payload.email_verified || !payload.sub) {
+      return res.status(401).send("Google account verification failed");
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email: payload.email.toLowerCase() },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: payload.name || "LearnAI User",
+          email: payload.email.toLowerCase(),
+          googleId: payload.sub,
+          role: "LEARNER",
+        },
+      });
+    } else if (!user.googleId) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { googleId: payload.sub },
+      });
+    } else if (user.googleId !== payload.sub) {
+      return res.status(401).send("Google account mismatch");
+    }
+
+    const token = jwt.sign(
+      { sub: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  } catch (error) {
+    console.error("Google OAuth error:", error);
+    return res.status(500).send("Google authentication failed");
+  }
 });
 
 
