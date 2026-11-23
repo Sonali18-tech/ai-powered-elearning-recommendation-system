@@ -170,12 +170,13 @@ export default function Register() {
             </p>
           </div>
 
-          {/* Google OAuth - integration pending */}
+          {/* GOOGLE OAUTH */}
           <button
             type="button"
-            onClick={() =>
-              alert("Google OAuth will be integrated with the backend later.")
-            }
+            onClick={() => {
+              window.location.href =
+                "http://localhost:5000/api/auth/google";
+            }}
             className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             <svg viewBox="0 0 48 48" className="h-5 w-5">
