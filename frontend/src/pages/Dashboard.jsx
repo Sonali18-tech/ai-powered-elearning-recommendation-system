@@ -22,6 +22,10 @@ const [likedCourseIds, setLikedCourseIds] = useState([]);
 const [recommendations, setRecommendations] = useState([]);
 const [recommendationsLoading, setRecommendationsLoading] = useState(true);
 const [recommendationsError, setRecommendationsError] = useState("");
+const [difficultyPredictions, setDifficultyPredictions] = useState([]);
+const [difficultyLoading, setDifficultyLoading] = useState(false);
+const [difficultyError, setDifficultyError] = useState("");
+const [difficultyMetrics, setDifficultyMetrics] = useState([]);
 
   const [profileForm, setProfileForm] = useState({
   education: "",
@@ -81,6 +85,24 @@ try {
 } finally {
   setRecommendationsLoading(false);
 }
+
+try {
+  const predictionResponse = await api.get(
+    "/difficulty/my-predictions"
+  );
+
+  setDifficultyPredictions(predictionResponse.data.predictions);
+} catch (err) {
+  console.error("Unable to load saved difficulty predictions:", err);
+}
+
+try {
+  const metricsResponse = await api.get("/difficulty/metrics");
+  setDifficultyMetrics(metricsResponse.data.metrics);
+} catch (err) {
+  console.error("Unable to load model metrics:", err);
+}
+
 
   };
 
@@ -194,6 +216,29 @@ const handleCourseInteraction = async (courseId, eventType) => {
     setEnrollmentError(
       err.response?.data?.message || "Unable to record activity."
     );
+  }
+};
+
+const handleDifficultyPrediction = async () => {
+  try {
+    setDifficultyLoading(true);
+    setDifficultyError("");
+
+    const response = await api.post("/difficulty/predict");
+
+    setDifficultyPredictions(response.data.predictions);
+
+    // Refresh saved model evaluation metrics
+    const metricsResponse = await api.get("/difficulty/metrics");
+
+    setDifficultyMetrics(metricsResponse.data.metrics);
+  } catch (err) {
+    setDifficultyError(
+      err.response?.data?.message ||
+      "Unable to generate difficulty predictions."
+    );
+  } finally {
+    setDifficultyLoading(false);
   }
 };
 
@@ -606,6 +651,129 @@ const handleCourseInteraction = async (courseId, eventType) => {
     </div>
   )}
 </section>
+
+
+{/* ML Difficulty Prediction */}
+<section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div>
+      <h2 className="text-2xl font-bold text-slate-800">
+        AI Learning Difficulty Analysis
+      </h2>
+      <p className="mt-1 text-slate-500">
+        Discover which course difficulty levels best match your learning profile.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={handleDifficultyPrediction}
+      disabled={difficultyLoading}
+      className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {difficultyLoading
+        ? "Analysing..."
+        : "Analyse My Learning Level"}
+    </button>
+  </div>
+
+  {difficultyError && (
+    <p className="mt-4 text-sm text-red-600">
+      {difficultyError}
+    </p>
+  )}
+
+  {difficultyPredictions.length > 0 ? (
+    <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {difficultyPredictions.map((item) => (
+        <div
+          key={item.id}
+          className="rounded-xl border border-slate-200 p-5"
+        >
+          <h3 className="font-bold text-slate-800">
+            {item.course.title}
+          </h3>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Course difficulty: {item.course.difficulty}
+          </p>
+
+          <div className="mt-5 rounded-xl bg-indigo-50 p-4">
+            <p className="text-xs font-semibold text-indigo-700">
+              Predicted Suitable Level
+            </p>
+
+            <p className="mt-1 text-xl font-bold text-indigo-800">
+              {item.predictedLevel}
+            </p>
+
+            <p className="mt-2 text-sm text-indigo-700">
+              Model confidence:{" "}
+              {Math.round((item.predictedScore || 0) * 100)}%
+            </p>
+          </div>
+
+          <p className="mt-3 text-xs text-slate-400">
+            Model version: {item.modelVersion || "Unknown"}
+          </p>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="mt-6 text-sm text-slate-500">
+      No predictions available yet. Select Analyse My Learning Level
+      to generate your personalized predictions.
+    </p>
+  )}
+
+  {difficultyMetrics.length > 0 && (
+    <div className="mt-8 border-t border-slate-100 pt-6">
+      <h3 className="text-lg font-bold text-slate-800">
+        ML Model Evaluation
+      </h3>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        {[
+          {
+            label: "Accuracy",
+            value: `${(
+              (difficultyMetrics[0].metrics?.accuracy || 0) * 100
+            ).toFixed(2)}%`,
+          },
+          {
+            label: "Training Records",
+            value:
+              difficultyMetrics[0].metrics?.training_records ?? "N/A",
+          },
+          {
+            label: "Testing Records",
+            value:
+              difficultyMetrics[0].metrics?.testing_records ?? "N/A",
+          },
+        ].map((metric) => (
+          <div
+            key={metric.label}
+            className="rounded-xl bg-slate-50 p-4"
+          >
+            <p className="text-sm text-slate-500">
+              {metric.label}
+            </p>
+            <p className="mt-1 text-xl font-bold text-slate-800">
+              {metric.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-xs text-slate-400">
+        Training data:{" "}
+        {difficultyMetrics[0].metrics?.dataset_type || "Not specified"}.
+        Metrics are from the model's held-out evaluation set.
+      </p>
+    </div>
+  )}
+</section>
+
 
 {/* My Enrolled Courses */}
 <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
