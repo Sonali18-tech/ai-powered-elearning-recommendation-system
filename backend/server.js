@@ -14,6 +14,7 @@ import profileRoutes from "./routes/profile.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import enrollmentRoutes from "./routes/enrollment.routes.js";
 import interactionRoutes from "./routes/interaction.routes.js";
+import recommendationRoutes from "./routes/recommendation.routes.js";
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/interactions", interactionRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 
 app.listen(PORT, () => {
   console.log(`LearnAI server running on port ${PORT}`);

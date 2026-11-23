@@ -19,6 +19,9 @@ const [enrollmentLoading, setEnrollmentLoading] = useState(true);
 const [enrollmentError, setEnrollmentError] = useState("");
 const [enrollingCourseId, setEnrollingCourseId] = useState("");
 const [likedCourseIds, setLikedCourseIds] = useState([]);
+const [recommendations, setRecommendations] = useState([]);
+const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+const [recommendationsError, setRecommendationsError] = useState("");
 
   const [profileForm, setProfileForm] = useState({
   education: "",
@@ -68,6 +71,15 @@ try {
   setEnrollmentError("Unable to load your enrolled courses.");
 } finally {
   setEnrollmentLoading(false);
+}
+
+try {
+  const recommendationsResponse = await api.get("/recommendations");
+  setRecommendations(recommendationsResponse.data.recommendations);
+} catch (err) {
+  setRecommendationsError("Unable to load recommendations.");
+} finally {
+  setRecommendationsLoading(false);
 }
 
   };
@@ -128,6 +140,8 @@ const handleEnroll = async (courseId) => {
       response.data.enrollment,
       ...previous,
     ]);
+    const recommendationResponse = await api.get("/recommendations");
+setRecommendations(recommendationResponse.data.recommendations);
   } catch (err) {
     setEnrollmentError(
       err.response?.data?.message || "Unable to enroll in this course."
@@ -156,6 +170,7 @@ const handleProgressUpdate = async (enrollmentId, progress) => {
   }
 };
 
+
 const handleCourseInteraction = async (courseId, eventType) => {
   try {
     await api.post("/interactions", {
@@ -170,6 +185,11 @@ const handleCourseInteraction = async (courseId, eventType) => {
           : [...previous, courseId]
       );
     }
+
+    // Refresh personalized recommendations
+    const response = await api.get("/recommendations");
+    setRecommendations(response.data.recommendations);
+
   } catch (err) {
     setEnrollmentError(
       err.response?.data?.message || "Unable to record activity."
@@ -484,7 +504,108 @@ const handleCourseInteraction = async (courseId, eventType) => {
   )}
 </section>
 
+{/* Personalized Recommendations */}
+<section className="mt-10 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+  <div>
+    <h2 className="text-2xl font-bold text-slate-800">
+      Recommended for You
+    </h2>
+    <p className="mt-1 text-slate-500">
+      Courses selected based on your interests, skills and learning activity.
+    </p>
+  </div>
 
+  {recommendationsLoading ? (
+    <p className="mt-6 text-slate-500">
+      Finding courses for you...
+    </p>
+  ) : recommendationsError ? (
+    <p className="mt-6 text-red-500">
+      {recommendationsError}
+    </p>
+  ) : recommendations.length === 0 ? (
+    <p className="mt-6 text-slate-500">
+      No recommendations available yet. Add your interests and skills
+      to your learner profile to get personalized suggestions.
+    </p>
+  ) : (
+    <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {recommendations.map((item) => (
+        <div
+          key={item.id}
+          className="flex flex-col rounded-2xl border border-indigo-100 bg-indigo-50/30 p-5"
+        >
+          <span className="w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+            {item.course.category}
+          </span>
+
+          <h3 className="mt-4 text-lg font-bold text-slate-800">
+            {item.course.title}
+          </h3>
+
+          <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">
+            {item.course.description}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+              {item.course.difficulty}
+            </span>
+
+            <span className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+              {item.course.duration} hours
+            </span>
+          </div>
+
+          <div className="mt-4 rounded-xl bg-white p-3">
+            <p className="text-xs font-semibold text-indigo-700">
+              Why recommended?
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {item.feedback || "Matches your learning profile"}
+            </p>
+            <p className="mt-2 text-xs font-medium text-slate-400">
+              Relevance score: {item.rankScore}
+            </p>
+          </div>
+
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                handleCourseInteraction(item.courseId, "LIKE")
+              }
+              className="flex-1 rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              Like
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                handleCourseInteraction(item.courseId, "VIEW")
+              }
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              View
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                handleCourseInteraction(item.courseId, "DISMISS")
+              }
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              title="Not interested"
+            >
+              Hide
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</section>
 
 {/* My Enrolled Courses */}
 <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
