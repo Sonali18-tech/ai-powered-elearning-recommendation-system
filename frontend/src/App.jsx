@@ -6,6 +6,8 @@ import Register from "./pages/register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminDashboard from "./pages/AdminDashboard";
+
 import {
   ArrowRight,
   BookOpen,
@@ -587,6 +589,7 @@ export default function App() {
 
 <Route element={<ProtectedRoute />}>
   <Route path="/dashboard" element={<Dashboard />} />
+  <Route path="/admin" element={<AdminDashboard />} />
 </Route>
 
         <Route

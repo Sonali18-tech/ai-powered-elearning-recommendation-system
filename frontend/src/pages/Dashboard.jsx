@@ -15,17 +15,19 @@ export default function Dashboard() {
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [coursesError, setCoursesError] = useState("");
   const [myEnrollments, setMyEnrollments] = useState([]);
-const [enrollmentLoading, setEnrollmentLoading] = useState(true);
-const [enrollmentError, setEnrollmentError] = useState("");
-const [enrollingCourseId, setEnrollingCourseId] = useState("");
-const [likedCourseIds, setLikedCourseIds] = useState([]);
-const [recommendations, setRecommendations] = useState([]);
-const [recommendationsLoading, setRecommendationsLoading] = useState(true);
-const [recommendationsError, setRecommendationsError] = useState("");
-const [difficultyPredictions, setDifficultyPredictions] = useState([]);
-const [difficultyLoading, setDifficultyLoading] = useState(false);
-const [difficultyError, setDifficultyError] = useState("");
-const [difficultyMetrics, setDifficultyMetrics] = useState([]);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(true);
+  const [enrollmentError, setEnrollmentError] = useState("");
+  const [enrollingCourseId, setEnrollingCourseId] = useState("");
+  const [likedCourseIds, setLikedCourseIds] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+  const [recommendationsError, setRecommendationsError] = useState("");
+  const [difficultyPredictions, setDifficultyPredictions] = useState([]);
+  const [difficultyLoading, setDifficultyLoading] = useState(false);
+  const [difficultyError, setDifficultyError] = useState("");
+  const [difficultyMetrics, setDifficultyMetrics] = useState([]);
+  const [difficultyFeedbackStatus, setDifficultyFeedbackStatus] = useState({});
+  const [difficultyFeedbackError, setDifficultyFeedbackError] = useState("");
 
   const [profileForm, setProfileForm] = useState({
   education: "",
@@ -239,6 +241,27 @@ const handleDifficultyPrediction = async () => {
     );
   } finally {
     setDifficultyLoading(false);
+  }
+};
+
+const handleDifficultyFeedback = async (courseId, rating) => {
+  try {
+    setDifficultyFeedbackError("");
+
+    await api.post("/difficulty-data/feedback", {
+      courseId,
+      rating,
+    });
+
+    setDifficultyFeedbackStatus((previous) => ({
+      ...previous,
+      [courseId]: rating,
+    }));
+  } catch (err) {
+    setDifficultyFeedbackError(
+      err.response?.data?.message ||
+      "Unable to save difficulty feedback."
+    );
   }
 };
 
@@ -786,6 +809,12 @@ const handleDifficultyPrediction = async () => {
         Track your learning progress.
       </p>
     </div>
+     {difficultyFeedbackError && (
+  <p className="mt-3 text-sm text-red-600">
+    {difficultyFeedbackError}
+  </p>
+)}
+
 
     <span className="text-sm font-semibold text-indigo-600">
       {myEnrollments.length} Enrolled
@@ -867,6 +896,42 @@ const handleDifficultyPrediction = async () => {
               <option value="100">100% — Completed</option>
             </select>
           </div>
+
+          <div className="mt-5 border-t border-slate-100 pt-4">
+  <p className="mb-3 text-sm font-semibold text-slate-700">
+    How difficult was this course for you?
+  </p>
+
+  <div className="flex flex-wrap gap-2">
+    {[
+      { label: "Too Easy", value: "TOO_EASY" },
+      { label: "Just Right", value: "JUST_RIGHT" },
+      { label: "Too Difficult", value: "TOO_DIFFICULT" },
+    ].map((option) => (
+      <button
+        key={option.value}
+        type="button"
+        onClick={() =>
+          handleDifficultyFeedback(item.courseId, option.value)
+        }
+        className={`rounded-lg border px-3 py-2 text-xs font-semibold ${
+          difficultyFeedbackStatus[item.courseId] === option.value
+            ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+            : "border-slate-200 text-slate-600 hover:bg-slate-50"
+        }`}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+
+  {difficultyFeedbackStatus[item.courseId] && (
+    <p className="mt-2 text-xs text-emerald-600">
+      Feedback saved successfully.
+    </p>
+  )}
+</div>
+
         </div>
       ))}
     </div>

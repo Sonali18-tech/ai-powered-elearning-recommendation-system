@@ -18,8 +18,9 @@ BASE_DIR = Path(__file__).resolve().parent
 
 MODEL_PATH = BASE_DIR / "model.joblib"
 METRICS_PATH = BASE_DIR / "metrics.json"
+DATASET_PATH = BASE_DIR / "data" / "learner_training_data.csv"
 
-MODEL_VERSION = "1.0.0"
+MODEL_VERSION = "2.0.0"
 
 FEATURES = [
     "education_level",
@@ -34,6 +35,8 @@ FEATURES = [
     "tag_count",
     "course_difficulty_code",
 ]
+
+TARGETS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"]
 
 
 def generate_dataset(rows=5000, random_state=42):
@@ -53,7 +56,6 @@ def generate_dataset(rows=5000, random_state=42):
         "course_difficulty_code": rng.integers(1, 4, rows),
     })
 
-    # Synthetic readiness and course complexity relationship.
     readiness = (
         data["education_level"] * 0.8
         + data["skill_count"] * 0.25
@@ -73,24 +75,78 @@ def generate_dataset(rows=5000, random_state=42):
     margin = readiness - complexity
 
     data["target"] = np.select(
-        [
-            margin < 2,
-            margin < 7,
-        ],
-        [
-            "BEGINNER",
-            "INTERMEDIATE",
-        ],
+        [margin < 2, margin < 7],
+        ["BEGINNER", "INTERMEDIATE"],
         default="ADVANCED",
     )
 
     return data
 
 
-def train_model():
-    print("Generating synthetic training dataset...")
+def load_training_data():
+    if not DATASET_PATH.exists():
+        print("Learner dataset not found.")
+        print("Using synthetic fallback dataset.")
+        return generate_dataset(), "Synthetic (fallback)"
 
-    data = generate_dataset()
+    print("Loading real learner feedback dataset...")
+
+    data = pd.read_csv(DATASET_PATH)
+
+    required_columns = FEATURES + ["target"]
+    missing = [
+        column for column in required_columns
+        if column not in data.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            f"Dataset is missing columns: {missing}"
+        )
+
+    data = data[required_columns].copy()
+
+    for column in FEATURES:
+        data[column] = pd.to_numeric(
+            data[column], errors="coerce"
+        )
+
+    data["target"] = data["target"].astype(str).str.upper()
+    data = data.dropna()
+
+    data = data[data["target"].isin(TARGETS)]
+
+    if len(data) < 30:
+        raise ValueError(
+            f"Only {len(data)} valid observations found. "
+            "Collect at least 30 before training."
+        )
+
+    class_counts = data["target"].value_counts()
+
+    if len(class_counts) < 2 or class_counts.min() < 5:
+        raise ValueError(
+            "Need at least two target classes and at least "
+            "five observations in each class."
+        )
+
+    if (
+        (data["completion_rate"] < 0).any()
+        or (data["completion_rate"] > 1).any()
+        or (data["avg_quiz_score"] < 0).any()
+        or (data["avg_quiz_score"] > 100).any()
+    ):
+        raise ValueError("Dataset contains out-of-range values.")
+
+    print("Valid learner observations:", len(data))
+    print("Class distribution:")
+    print(class_counts.to_dict())
+
+    return data, "Learner Feedback"
+
+
+def train_model():
+    data, dataset_type = load_training_data()
 
     X = data[FEATURES]
     y = data["target"]
@@ -140,25 +196,32 @@ def train_model():
         )
     )
 
-    joblib.dump(model, MODEL_PATH)
-
     metrics = {
         "model_type": "RandomForestClassifier",
         "model_version": MODEL_VERSION,
-        "dataset_type": "Synthetic",
+        "dataset_type": dataset_type,
+        "total_records": len(data),
         "training_records": len(X_train),
         "testing_records": len(X_test),
         "accuracy": round(float(accuracy), 4),
         "classification_report": report,
         "confusion_matrix": matrix.tolist(),
         "class_labels": model.classes_.tolist(),
+        "class_distribution": {
+            str(key): int(value)
+            for key, value in y.value_counts().items()
+        },
         "feature_importance": feature_importance,
     }
+
+    # Save only after successful training and evaluation.
+    joblib.dump(model, MODEL_PATH)
 
     with open(METRICS_PATH, "w", encoding="utf-8") as file:
         json.dump(metrics, file, indent=4)
 
     print("\nTraining completed.")
+    print("Dataset:", dataset_type)
     print("Accuracy:", round(accuracy * 100, 2), "%")
     print("\nClassification report:")
     print(classification_report(y_test, predictions))
