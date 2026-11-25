@@ -8,28 +8,48 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import api from "../services/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setError("Please enter your email address.");
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    // Backend email service will be integrated later.
-    setError("");
-    setSubmitted(true);
+    try {
+      setLoading(true);
+      setError("");
+
+      await api.post("/password/forgot-password", {
+        email: normalizedEmail,
+      });
+
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Forgot password error:", err);
+
+      setError(
+        err.response?.data?.message ||
+        "Unable to process your request. Please try again later."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,7 +86,10 @@ export default function ForgotPassword() {
                 </label>
 
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
+                  <Mail
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={19}
+                  />
                   <input
                     type="email"
                     value={email}
@@ -76,6 +99,7 @@ export default function ForgotPassword() {
                     }}
                     placeholder="you@example.com"
                     className="w-full rounded-xl border border-slate-200 py-3.5 pl-12 pr-4 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50"
+                    required
                   />
                 </div>
               </div>
@@ -88,15 +112,22 @@ export default function ForgotPassword() {
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-indigo-600 py-4 font-bold text-white transition hover:bg-indigo-700"
+                disabled={loading}
+                className="w-full rounded-xl bg-indigo-600 py-4 font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Send Reset Link <ArrowRight className="ml-2 inline" size={18} />
+                {loading ? "Sending..." : "Send Reset Link"}
+                {!loading && (
+                  <ArrowRight className="ml-2 inline" size={18} />
+                )}
               </button>
             </form>
           </>
         ) : (
           <div className="py-5 text-center">
-            <CheckCircle2 className="mx-auto mb-5 text-emerald-500" size={58} />
+            <CheckCircle2
+              className="mx-auto mb-5 text-emerald-500"
+              size={58}
+            />
 
             <h1 className="text-2xl font-extrabold text-slate-900">
               Check Your Email
@@ -107,12 +138,12 @@ export default function ForgotPassword() {
               you will receive instructions to reset your password.
             </p>
 
-            <p className="mt-3 text-xs text-slate-400">
-              Email delivery will be enabled after backend integration.
-            </p>
-
             <button
-              onClick={() => setSubmitted(false)}
+              onClick={() => {
+                setSubmitted(false);
+                setEmail("");
+                setError("");
+              }}
               className="mt-7 font-semibold text-indigo-600"
             >
               Try another email
