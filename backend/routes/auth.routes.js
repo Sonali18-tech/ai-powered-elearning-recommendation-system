@@ -24,8 +24,9 @@ const createToken = (user) => {
 const setAuthCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
+    path: "/",
     maxAge: 24 * 60 * 60 * 1000,
   });
 };
@@ -193,11 +194,11 @@ router.get("/me", authMiddleware, async (req, res) => {
 // LOGOUT
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+});
 
   return res.status(200).json({
     success: true,
@@ -289,11 +290,12 @@ router.get("/google/callback", async (req, res) => {
     );
 
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+  maxAge: 24 * 60 * 60 * 1000,
+});
 
     return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
   } catch (error) {
