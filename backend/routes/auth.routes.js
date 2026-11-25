@@ -218,10 +218,11 @@ router.get("/google", (req, res) => {
   });
 
   const authorizationUrl = googleClient.generateAuthUrl({
-    access_type: "online",
-    scope: ["openid", "email", "profile"],
-    state,
-  });
+  access_type: "online",
+  scope: ["openid", "email", "profile"],
+  state,
+  redirect_uri: process.env.GOOGLE_CALLBACK_URL,
+});
 
   return res.redirect(authorizationUrl);
 });

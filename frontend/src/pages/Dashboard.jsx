@@ -815,7 +815,6 @@ const handleDifficultyFeedback = async (courseId, rating) => {
   </p>
 )}
 
-
     <span className="text-sm font-semibold text-indigo-600">
       {myEnrollments.length} Enrolled
     </span>
