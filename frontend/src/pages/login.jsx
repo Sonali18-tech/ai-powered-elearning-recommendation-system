@@ -162,7 +162,7 @@ const handleSubmit = async (e) => {
   type="button"
   onClick={() => {
     window.location.href =
-      "http://localhost:5000/api/auth/google";
+      `${import.meta.env.VITE_API_URL}/auth/google`;
   }}
   className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
 >
