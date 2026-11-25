@@ -1,25 +1,29 @@
 
 import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import api from "../services/api";
 
-export default function ProtectedRoute() {
-  const [authenticated, setAuthenticated] = useState(null);
+export default function ProtectedRoute({ allowedRoles }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     const verifyUser = async () => {
       try {
-        await api.get("/auth/me");
-        setAuthenticated(true);
+        const response = await api.get("/auth/me");
+        setUser(response.data.user);
       } catch (error) {
-        setAuthenticated(false);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
     };
 
     verifyUser();
   }, []);
 
-  if (authenticated === null) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <p className="text-lg font-semibold text-indigo-600">
@@ -29,9 +33,19 @@ export default function ProtectedRoute() {
     );
   }
 
-  if (!authenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return (
+      <Navigate
+        to={user.role === "ADMIN" ? "/admin" : "/dashboard"}
+        replace
+      />
+    );
   }
 
   return <Outlet />;
 }
+

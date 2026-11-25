@@ -587,10 +587,14 @@ export default function App() {
   element={<ResetPassword />}
 />
 
-<Route element={<ProtectedRoute />}>
+<Route element={<ProtectedRoute allowedRoles={["LEARNER", "INSTRUCTOR"]} />}>
   <Route path="/dashboard" element={<Dashboard />} />
+</Route>
+
+<Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
   <Route path="/admin" element={<AdminDashboard />} />
 </Route>
+
 
         <Route
           path="*"

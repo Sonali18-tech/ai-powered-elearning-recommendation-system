@@ -27,48 +27,59 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+  setFormData({
+    ...formData,
+    [e.target.name]: e.target.value,
+  });
+
+  setError("");
+};
+
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  if (!formData.email || !formData.password) {
+    setError("Please fill in all fields.");
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const response = await api.post("/auth/login", {
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
     });
 
-    setError("");
-  };
+    const user = response.data.user;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (!formData.email || !formData.password) {
-      setError("Please fill in all fields.");
-      return;
+    if (!user) {
+      throw new Error("User information was not returned by the server.");
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError("Please enter a valid email address.");
-      return;
+    if (user.role === "ADMIN") {
+      navigate("/admin", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
     }
+  } catch (err) {
+    setError(
+      err.response?.data?.message ||
+      err.message ||
+      "Unable to login. Please try again."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
-    try {
-      setLoading(true);
-
-      const response = await api.post("/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (response.data.success) {
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to login. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen bg-white">
