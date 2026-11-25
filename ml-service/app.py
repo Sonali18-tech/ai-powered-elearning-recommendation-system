@@ -136,9 +136,10 @@ def predict():
         }), 500
 
 
-if __name__ == "__main__":
-    load_model()
+# Load the trained model when the application starts
+load_model()
 
+if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
         port=8000,
