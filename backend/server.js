@@ -96,6 +96,24 @@ app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/difficulty", difficultyRoutes);
 app.use("/api/difficulty-data", difficultyDataRoutes);
 
+// Return a consistent response when no API route matches the request.
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found.",
+  });
+});
+
+// Keep unexpected server errors from returning an HTML response to the client.
+app.use((error, req, res, next) => {
+  console.error("Unhandled server error:", error);
+
+  res.status(error.status || 500).json({
+    success: false,
+    message: "An unexpected server error occurred.",
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`LearnAI server running on port ${PORT}`);
 });
