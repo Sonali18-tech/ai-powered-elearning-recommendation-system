@@ -11,7 +11,7 @@ import {
   GraduationCap,
   ShieldCheck,
 } from "lucide-react";
-import api from "../services/api";
+import api, { GOOGLE_AUTH_URL } from "../services/api";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -161,8 +161,7 @@ const handleSubmit = async (e) => {
 <button
   type="button"
   onClick={() => {
-    window.location.href =
-      `${import.meta.env.VITE_API_URL}/auth/google`;
+    window.location.href = GOOGLE_AUTH_URL;
   }}
   className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
 >
