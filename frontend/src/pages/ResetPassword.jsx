@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import api from "../services/api";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -20,8 +21,9 @@ export default function ResetPassword() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!token) {
@@ -39,10 +41,24 @@ export default function ResetPassword() {
       return;
     }
 
-    // Backend token verification and password update
-    // will be implemented later.
-    setError("");
-    setSuccess(true);
+    try {
+      setLoading(true);
+      setError("");
+
+      await api.post("/password/reset-password", {
+        token,
+        newPassword: password,
+      });
+
+      setSuccess(true);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Unable to reset your password. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputClass =
@@ -66,8 +82,7 @@ export default function ResetPassword() {
               Password Updated!
             </h1>
             <p className="mt-3 text-sm text-slate-500">
-              This is a frontend demonstration. Your actual password
-              has not been changed because backend integration is pending.
+              Your password has been updated. You can now sign in with it.
             </p>
             <Link
               to="/login"
@@ -147,9 +162,13 @@ export default function ResetPassword() {
 
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full rounded-xl bg-indigo-600 py-4 font-bold text-white transition hover:bg-indigo-700"
               >
-                Update Password <ArrowRight className="ml-2 inline" size={18} />
+                {loading ? "Updating..." : "Update Password"}
+                {!loading && (
+                  <ArrowRight className="ml-2 inline" size={18} />
+                )}
               </button>
             </form>
           </>
