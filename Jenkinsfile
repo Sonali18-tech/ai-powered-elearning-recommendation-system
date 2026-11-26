@@ -1,14 +1,15 @@
 
 pipeline {
     agent any
+
     options {
-    skipDefaultCheckout(true)
-}
+        skipDefaultCheckout(true)
+    }
 
     stages {
         stage('Checkout') {
             steps {
-                echo 'Source code checked out from GitHub'
+                echo 'Checking out source code from GitHub'
                 checkout scm
             }
         }
@@ -39,14 +40,51 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy Frontend') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
+                    string(credentialsId: 'vercel-team-id', variable: 'VERCEL_TEAM')
+                ]) {
+                    dir('frontend') {
+                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'                    }
+                }
+            }
+        }
+
+        stage('Deploy Backend') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
+                    string(credentialsId: 'vercel-team-id', variable: 'VERCEL_TEAM')
+                ]) {
+                    dir('backend') {
+                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'                    }
+                }
+            }
+        }
+
+        stage('Deploy ML Service') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
+                    string(credentialsId: 'vercel-team-id', variable: 'VERCEL_TEAM')
+                ]) {
+                    dir('ml-service') {
+                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'All pipeline stages completed successfully!'
+            echo 'CI passed and all three production deployments completed successfully!'
         }
+
         failure {
-            echo 'Pipeline failed. Check the stage logs.'
+            echo 'Pipeline failed. Check the Jenkins console output.'
         }
     }
 }
