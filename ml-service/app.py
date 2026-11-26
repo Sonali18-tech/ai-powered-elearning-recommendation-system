@@ -52,6 +52,7 @@ def health():
         "success": True,
         "service": "LearnAI ML Service",
         "model_loaded": model is not None,
+        "model_version": metrics.get("model_version") if metrics else None,
     })
 
 
