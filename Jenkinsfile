@@ -7,6 +7,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo 'Checking out source code from GitHub'
@@ -44,11 +45,17 @@ pipeline {
         stage('Deploy Frontend') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
-                    string(credentialsId: 'vercel-team-id', variable: 'VERCEL_TEAM')
+                    string(
+                        credentialsId: 'vercel-token',
+                        variable: 'VERCEL_TOKEN'
+                    )
                 ]) {
-                    dir('frontend') {
-                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'                    }
+                    withEnv([
+                        'VERCEL_ORG_ID=team_KBimKVd4KZbpOMmjF3it6GCM',
+                        'VERCEL_PROJECT_ID=prj_lWcnCsJHWUgDKDUgfDg7SL4EHoxA'
+                    ]) {
+                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'
+                    }
                 }
             }
         }
@@ -56,11 +63,17 @@ pipeline {
         stage('Deploy Backend') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
-                    string(credentialsId: 'vercel-team-id', variable: 'VERCEL_TEAM')
+                    string(
+                        credentialsId: 'vercel-token',
+                        variable: 'VERCEL_TOKEN'
+                    )
                 ]) {
-                    dir('backend') {
-                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'                    }
+                    withEnv([
+                        'VERCEL_ORG_ID=team_KBimKVd4KZbpOMmjF3it6GCM',
+                        'VERCEL_PROJECT_ID=prj_hajI7cNADbBYtd0gA3kFYRJ2814O'
+                    ]) {
+                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'
+                    }
                 }
             }
         }
@@ -68,11 +81,17 @@ pipeline {
         stage('Deploy ML Service') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
-                    string(credentialsId: 'vercel-team-id', variable: 'VERCEL_TEAM')
+                    string(
+                        credentialsId: 'vercel-token',
+                        variable: 'VERCEL_TOKEN'
+                    )
                 ]) {
-                    dir('ml-service') {
-                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'                    }
+                    withEnv([
+                        'VERCEL_ORG_ID=team_KBimKVd4KZbpOMmjF3it6GCM',
+                        'VERCEL_PROJECT_ID=prj_w685hNlDmvvTiihJ9PbQ0PYMm7om'
+                    ]) {
+                        bat 'npx --yes vercel@67.0.0 deploy --prod --yes --token="%VERCEL_TOKEN%"'
+                    }
                 }
             }
         }
