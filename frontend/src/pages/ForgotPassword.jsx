@@ -81,7 +81,10 @@ export default function ForgotPassword() {
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label
+                  htmlFor="forgot-password-email"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
                   Email Address
                 </label>
 
@@ -91,6 +94,7 @@ export default function ForgotPassword() {
                     size={19}
                   />
                   <input
+                    id="forgot-password-email"
                     type="email"
                     value={email}
                     onChange={(e) => {
@@ -98,6 +102,7 @@ export default function ForgotPassword() {
                       setError("");
                     }}
                     placeholder="you@example.com"
+                    autoComplete="email"
                     className="w-full rounded-xl border border-slate-200 py-3.5 pl-12 pr-4 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50"
                     required
                   />
@@ -105,7 +110,10 @@ export default function ForgotPassword() {
               </div>
 
               {error && (
-                <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                <p
+                  role="alert"
+                  className="rounded-lg bg-red-50 p-3 text-sm text-red-600"
+                >
                   {error}
                 </p>
               )}
