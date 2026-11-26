@@ -12,7 +12,7 @@ import {
   GraduationCap,
   CheckCircle2,
 } from "lucide-react";
-import api from "../services/api";
+import api, { GOOGLE_AUTH_URL } from "../services/api";
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
@@ -174,8 +174,7 @@ export default function Register() {
           <button
             type="button"
             onClick={() => {
-              window.location.href =
-                "http://localhost:5000/api/auth/google";
+              window.location.href = GOOGLE_AUTH_URL;
             }}
             className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
           >
