@@ -122,6 +122,12 @@ npm install
 
 Configure the backend environment variables in a `.env` file using the required values for your database, JWT, email, Google OAuth, and ML service connection.
 
+Start by copying the safe template, then replace its example values with your own local configuration. Do not commit the completed `.env` file because it contains secrets.
+
+```bash
+cp backend/.env.example backend/.env
+```
+
 Run database migrations and generate the Prisma client:
 
 ```bash
@@ -156,6 +162,12 @@ python -m venv venv
 ```
 
 Activate the environment:
+
+macOS or Linux:
+
+```bash
+source venv/bin/activate
+```
 
 Windows PowerShell:
 
