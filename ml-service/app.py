@@ -101,11 +101,22 @@ def predict():
         if not np.all(np.isfinite(values)):
             raise ValueError("Features must be finite numbers.")
 
+        if any(value < 0 for value in values):
+            raise ValueError("Feature values cannot be negative.")
+
+        if not 0 <= values[0] <= 4:
+            raise ValueError("education_level must be between 0 and 4.")
+
         if not 0 <= values[5] <= 1:
             raise ValueError("completion_rate must be between 0 and 1.")
 
         if not 0 <= values[6] <= 100:
             raise ValueError("avg_quiz_score must be between 0 and 100.")
+
+        if not 1 <= values[10] <= 3:
+            raise ValueError(
+                "course_difficulty_code must be between 1 and 3."
+            )
 
         features = np.array([values], dtype=float)
 
