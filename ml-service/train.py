@@ -138,6 +138,28 @@ def load_training_data():
     ):
         raise ValueError("Dataset contains out-of-range values.")
 
+    non_negative_features = [
+        "education_level",
+        "skill_count",
+        "interest_match",
+        "goal_match",
+        "completed_courses",
+        "course_duration",
+        "prerequisite_count",
+        "tag_count",
+    ]
+
+    if (data[non_negative_features] < 0).any().any():
+        raise ValueError("Dataset contains negative feature values.")
+
+    if not data["education_level"].between(0, 4).all():
+        raise ValueError("education_level must be between 0 and 4.")
+
+    if not data["course_difficulty_code"].between(1, 3).all():
+        raise ValueError(
+            "course_difficulty_code must be between 1 and 3."
+        )
+
     print("Valid learner observations:", len(data))
     print("Class distribution:")
     print(class_counts.to_dict())
