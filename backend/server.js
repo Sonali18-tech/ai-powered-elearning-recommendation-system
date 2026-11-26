@@ -114,6 +114,21 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`LearnAI server running on port ${PORT}`);
 });
+
+const shutdown = (signal) => {
+  console.log(`${signal} received. Closing LearnAI server...`);
+
+  server.close(async () => {
+    try {
+      await prisma.$disconnect();
+    } finally {
+      process.exit(0);
+    }
+  });
+};
+
+process.once("SIGINT", () => shutdown("SIGINT"));
+process.once("SIGTERM", () => shutdown("SIGTERM"));
