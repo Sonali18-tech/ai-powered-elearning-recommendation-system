@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BrainCircuit,
   Eye,
@@ -25,6 +25,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
   setFormData({
@@ -67,7 +68,8 @@ const handleSubmit = async (e) => {
     if (user.role === "ADMIN") {
       navigate("/admin", { replace: true });
     } else {
-      navigate("/dashboard", { replace: true });
+      const destination = location.state?.from?.pathname || "/dashboard";
+      navigate(destination, { replace: true });
     }
   } catch (err) {
     setError(
