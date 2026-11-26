@@ -12,6 +12,7 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_CALLBACK_URL
 );
 const router = express.Router();
+const isProduction = process.env.NODE_ENV === "production";
 
 const createToken = (user) => {
   return jwt.sign(
@@ -24,10 +25,19 @@ const createToken = (user) => {
 const setAuthCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
     maxAge: 24 * 60 * 60 * 1000,
+  });
+};
+
+const clearAuthCookie = (res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
   });
 };
 
@@ -193,12 +203,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 
 // LOGOUT
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  path: "/",
-});
+  clearAuthCookie(res);
 
   return res.status(200).json({
     success: true,
@@ -213,7 +218,7 @@ router.get("/google", (req, res) => {
 
   res.cookie("google_oauth_state", state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction,
     sameSite: "lax",
     maxAge: 10 * 60 * 1000,
   });
@@ -244,7 +249,7 @@ router.get("/google/callback", async (req, res) => {
 
     res.clearCookie("google_oauth_state", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
       sameSite: "lax",
     });
 
@@ -289,13 +294,7 @@ router.get("/google/callback", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.cookie("token", token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  path: "/",
-  maxAge: 24 * 60 * 60 * 1000,
-});
+    setAuthCookie(res, token);
 
     return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
   } catch (error) {
