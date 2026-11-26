@@ -109,12 +109,16 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label
+                  htmlFor="new-password"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
                   New Password
                 </label>
                 <div className="relative">
                   <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
                   <input
+                    id="new-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -125,6 +129,8 @@ export default function ResetPassword() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    aria-label="Toggle new password visibility"
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
                   </button>
@@ -132,12 +138,16 @@ export default function ResetPassword() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label
+                  htmlFor="confirm-new-password"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
                   Confirm New Password
                 </label>
                 <div className="relative">
                   <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
                   <input
+                    id="confirm-new-password"
                     type={showConfirm ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -148,6 +158,8 @@ export default function ResetPassword() {
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    aria-label="Toggle confirmation password visibility"
+                    aria-pressed={showConfirm}
                   >
                     {showConfirm ? <EyeOff size={19} /> : <Eye size={19} />}
                   </button>
@@ -155,7 +167,10 @@ export default function ResetPassword() {
               </div>
 
               {error && (
-                <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                <p
+                  role="alert"
+                  className="rounded-lg bg-red-50 p-3 text-sm text-red-600"
+                >
                   {error}
                 </p>
               )}
